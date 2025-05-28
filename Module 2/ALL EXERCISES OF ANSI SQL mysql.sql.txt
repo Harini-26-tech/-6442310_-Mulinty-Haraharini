@@ -116,29 +116,38 @@ AND s1.session_id < s2.session_id
 AND s1.end_time > s2.start_time AND s1.start_time < s2.end_time;
 
 16. Unregistered Active Users:
-SELECT * FROM Users
+SELECT *
+FROM Users
 WHERE registration_date >= CURDATE() - INTERVAL 30 DAY
-AND user_id NOT IN (SELECT user_id FROM Registrations);
+  AND user_id NOT IN (
+    SELECT DISTINCT user_id
+    FROM Registrations
+  );
 
 17. Multi-Session Speakers:
 SELECT speaker_name, COUNT(*) AS total_sessions
 FROM Sessions
 GROUP BY speaker_name
-HAVING total_sessions > 1;
+HAVING COUNT(*) > 1;
 
 18. Events Without Resources:
 SELECT title
 FROM Events
-WHERE event_id NOT IN (SELECT DISTINCT event_id FROM Resources);
+WHERE event_id NOT IN (
+  SELECT event_id
+  FROM Resources
+);
 
 19. Completed Events with Feedback Summary:
-SELECT e.title, COUNT(DISTINCT r.user_id) AS total_registrations,
-       AVG(f.rating) AS avg_rating
+SELECT 
+    e.title, 
+    COUNT(DISTINCT r.user_id) AS total_registrations,
+    AVG(f.rating) AS avg_rating
 FROM Events e
 LEFT JOIN Registrations r ON e.event_id = r.event_id
 LEFT JOIN Feedback f ON e.event_id = f.event_id
 WHERE e.status = 'completed'
-GROUP BY e.event_id;
+GROUP BY e.event_id, e.title;
 
 20. User Engagement Index:
 SELECT u.full_name,
@@ -181,4 +190,7 @@ GROUP BY e.event_id;
 25. Events Without Sessions:
 SELECT title
 FROM Events
-WHERE event_id NOT IN (SELECT DISTINCT event_id FROM Sessions);
+WHERE event_id NOT IN (
+  SELECT event_id
+  FROM Sessions
+);
